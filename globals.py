@@ -38,7 +38,7 @@ def get_max_annotated_id():
     cursor.execute("SELECT MAX(ROWID) FROM folk_tales_annotated")
     result = cursor.fetchone()[0]
     conn.close()
-    return max(result, 99) if result is not None else 0
+    return max(result, 1000) if result is not None else 0
 
 
 def get_unannotated_tales(last_id):
