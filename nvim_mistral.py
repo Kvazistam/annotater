@@ -58,7 +58,7 @@ def ask_ai(promt):
 
     payload = {
     "model": "mistralai/mistral-medium-3.5-128b",
-    "reasoning_effort": "high",
+    "reasoning_effort": "none",
     "messages": [{"role":"user","content":promt}],
     "max_tokens": 200000,
     "temperature": 0.70,
@@ -69,17 +69,21 @@ def ask_ai(promt):
     response = requests.post(invoke_url, headers=headers, json=payload)
     
     cp = r"checkpoints"
+    full_texts = 'full_texts'
     time = datetime.now().strftime("%H-%M-%S")
-    path = os.path.join(cp, "ai_response"+time+".tmp")
+    path = os.path.join(cp, "ai_raw"+time+".tmp")
+    resp_path = os.path.join(cp, full_texts, "ai_response"+time+".tmp")
     
     if response.status_code != 200:
         return f"Ошибка API: {response.status_code} - {response.text}"
     
     if stream:
         raw_data = response.text
-        with open(path, 'w', encoding='utf-8') as fp:
-            fp.write(raw_data)
         json_string = parse_stream_to_json(raw_data)
+        with open(path, 'w', encoding='utf-8') as fp, open(resp_path, 'w', encoding='utf-8') as fp2:
+            fp.write(raw_data)
+            fp2.write(json_string)
+        
         return json_string
     else:
         try:
