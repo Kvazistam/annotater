@@ -41,7 +41,7 @@ def get_max_annotated_id():
     cursor.execute("SELECT MAX(ROWID) FROM folk_tales_annotated")
     result = cursor.fetchone()[0]
     conn.close()
-    return max(result, 100) if result is not None else 0
+    return result if result is not None else 0
 
 
 def get_unannotated_tales(last_id):
@@ -85,11 +85,11 @@ def save_result(tale_id, source, nation, title, text, stages_list, warns_content
     conn.commit()
     conn.close()
 
-def main(ask_ai):
+def main(ask_ai, start_with = -1):
     init_db()
 
     # Шаг 1: Узнаем, на каком ID остановились
-    last_id = get_max_annotated_id()
+    last_id = max(get_max_annotated_id(), start_with)
     print(f"[*] Последний обработанный ID в folk_tales_annotated: {last_id}")
 
     # Шаг 2: Получаем новые сказки
