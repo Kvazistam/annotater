@@ -1,10 +1,15 @@
 from datetime import datetime
 import os
 import requests, base64
-from globals import *
+# from globals import *
+import json
 import re
+import os
+from dotenv import load_dotenv
 
+load_dotenv()
 
+NVIDIA_API_KEY = os.getenv('NVIDIA_API_KEY')
 invoke_url = "https://integrate.api.nvidia.com/v1/chat/completions"
 stream = True
 
@@ -33,7 +38,16 @@ def parse_stream_to_json(raw: str):
             continue
     print(tokens)
 
-    return full_text
+    parts = re.split(r'(?<!\\)"', full_text)
+    
+    # Нечетные индексы (1, 3, 5...) — это содержимое внутри кавычек (значения и ключи)
+    for i in range(1, len(parts), 2):
+        # Экранируем обратные слэши и реальные переносы строк, превращая их в \n
+        parts[i] = parts[i].replace('\\', '\\\\').replace('\n', '\\n').replace('\r', '\\r')
+    
+    # Собираем строку обратно
+    fixed_json_str = '"'.join(parts)
+    return fixed_json_str
 
 
 def ask_ai(promt):
@@ -46,7 +60,7 @@ def ask_ai(promt):
     "model": "mistralai/mistral-medium-3.5-128b",
     "reasoning_effort": "high",
     "messages": [{"role":"user","content":promt}],
-    #   "max_tokens": ,
+    "max_tokens": 200000,
     "temperature": 0.70,
     "top_p": 1.00,
     "stream": stream
@@ -73,14 +87,15 @@ def ask_ai(promt):
         except Exception as e:
             return f'error with response {e}'
     
-    
-# print(ask_ai("5+2. send me answer in json format"))
+if __name__=='__main__':
+    print(ask_ai("5+2. send me answer in json format"))
+    # test(r'checkpoints\ai_response19-47-43')
 
 def test(file):
     with open(file, 'r', encoding='utf-8') as fp:
         raw = fp.read()
         print(parse_stream_to_json(raw))
-        # with open(r'connections\checkpoints\full_texts\ai_response_test', 'w') as fp:
-        #     fp.write(parse_stream_to_json(raw))
+        with open(r'checkpoints\full_texts\ai_response_test', 'w', encoding='utf-8') as fp:
+            fp.write(parse_stream_to_json(raw))
+        
 
-# test(r'connections\checkpoints\test')

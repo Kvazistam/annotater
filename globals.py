@@ -4,6 +4,9 @@ import sqlite3
 import os
 from dotenv import load_dotenv
 
+from CRUD import read_tale
+from nvim_mistral import parse_stream_to_json
+
 load_dotenv()
 
 NVIDIA_API_KEY = os.getenv("NVIDIA_API_KEY")
@@ -38,7 +41,7 @@ def get_max_annotated_id():
     cursor.execute("SELECT MAX(ROWID) FROM folk_tales_annotated")
     result = cursor.fetchone()[0]
     conn.close()
-    return max(result, 1000) if result is not None else 0
+    return max(result, 100) if result is not None else 0
 
 
 def get_unannotated_tales(last_id):
@@ -170,3 +173,13 @@ Output: {{
 
     print("[*] Обработка полностью завершена.")
 
+
+def manual_insert(id, ai_responce):
+    with open(ai_responce, 'r', encoding='utf-8') as fp:
+        raw = fp.read()
+        ai_text = parse_stream_to_json(raw)
+        d = clean_and_parse_json(ai_text)
+        tale = read_tale(id)
+        save_result(id, tale['source'], tale['nation'], tale['title'], d['annotated_text'], d['stages_found'], d.get('warnings', ""))
+
+# manual_insert(103, r'checkpoints\ai_response20-07-03')
